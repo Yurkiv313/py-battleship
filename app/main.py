@@ -63,12 +63,11 @@ class Ship:
 
 
 class Battleship:
-    def __init__(self, ships: list[Ship]) -> None:
+    def __init__(self, ships: list[tuple[tuple, tuple]]) -> None:
         self.field = {}
 
-        for ship_coords in ships:
-            ship = Ship(ship_coords[0], ship_coords[1])
-
+        for start, end in ships:
+            ship = Ship(start, end)
             for deck in ship.decks:
                 self.field[(deck.row, deck.column)] = ship
 
@@ -95,6 +94,10 @@ class Battleship:
             print(row)
 
     def fire(self, location: tuple) -> str:
+        row, col = location
+        if not (0 <= row < 10 and 0 <= col < 10):
+            return "Invalid coordinates! Out of bounds."
+
         if location in self.field:
             ship = self.field[location]
             ship.fire(location[0], location[1])
