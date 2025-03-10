@@ -1,34 +1,104 @@
+from typing import Any
+
+
 class Deck:
-    def __init__(self, row, column, is_alive=True):
-        pass
+    def __init__(self, row: int, column: int, is_alive: bool = True) -> None:
+        self.row = row
+        self.column = column
+        self.is_alive = is_alive
+
+    def __repr__(self) -> str:
+        return f"({self.row}, {self.column})"
 
 
 class Ship:
-    def __init__(self, start, end, is_drowned=False):
-        # Create decks and save them to a list `self.decks`
-        pass
+    def __init__(
+            self, start: tuple, end: tuple, is_drowned: bool = False
+    ) -> None:
+        self.decks = []
+        self.start = start
+        self.end = end
+        self.is_drowned = is_drowned
 
-    def get_deck(self, row, column):
-        # Find the corresponding deck in the list
-        pass
+        if start[0] == end[0]:
+            if start[1] > end[1]:
+                row = start[0]
+                for col in range(end[1], start[1] + 1):
+                    self.decks.append(Deck(row, col))
+                return
 
-    def fire(self, row, column):
-        # Change the `is_alive` status of the deck
-        # And update the `is_drowned` value if it's needed
-        pass
+            row = start[0]
+            for col in range(start[1], end[1] + 1):
+                self.decks.append(Deck(row, col))
+            return
+
+        if start[1] == end[1]:
+            if start[0] > end[0]:
+                col = start[1]
+                for row in range(end[0], start[0] + 1):
+                    self.decks.append(Deck(row, col))
+                return
+
+            col = start[1]
+            for row in range(start[0], end[0] + 1):
+                self.decks.append(Deck(row, col))
+            return
+
+    def get_deck(self, row: int, column: int) -> Any:
+        for deck in self.decks:
+            if deck.row == row and deck.column == column:
+                return deck
+        return None
+
+    def fire(self, row: int, column: int) -> None:
+        for deck in self.decks:
+            if deck.row == row and deck.column == column:
+                deck.is_alive = False
+
+        if all(not deck.is_alive for deck in self.decks):
+            self.is_drowned = True
+
+    def __repr__(self) -> str:
+        return f"{self.decks}"
 
 
 class Battleship:
-    def __init__(self, ships):
-        # Create a dict `self.field`.
-        # Its keys are tuples - the coordinates of the non-empty cells,
-        # A value for each cell is a reference to the ship
-        # which is located in it
-        pass
+    def __init__(self, ships: list[Ship]) -> None:
+        self.field = {}
 
-    def fire(self, location: tuple):
-        # This function should check whether the location
-        # is a key in the `self.field`
-        # If it is, then it should check if this cell is the last alive
-        # in the ship or not.
-        pass
+        for ship_coords in ships:
+            ship = Ship(ship_coords[0], ship_coords[1])
+
+            for deck in ship.decks:
+                self.field[(deck.row, deck.column)] = ship
+
+    def print_field(self) -> None:
+        matrix_field = []
+
+        for row_item in range(10):
+            row = []
+            for col_item in range(10):
+                if (row_item, col_item) in self.field:
+                    ship = self.field[(row_item, col_item)]
+                    deck = ship.get_deck(row_item, col_item)
+                    if ship.is_drowned:
+                        row.append("x")
+                    elif not deck.is_alive:
+                        row.append("*")
+                    else:
+                        row.append("□")
+                else:
+                    row.append("~")
+            matrix_field.append("  ".join(row))
+
+        for row in matrix_field:
+            print(row)
+
+    def fire(self, location: tuple) -> str:
+        if location in self.field:
+            ship = self.field[location]
+            ship.fire(location[0], location[1])
+            if ship.is_drowned:
+                return "Sunk!"
+            return "Hit!"
+        return "Miss!"
