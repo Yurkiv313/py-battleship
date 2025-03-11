@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Tuple, List, Optional
 
 
 class Deck:
@@ -13,7 +13,10 @@ class Deck:
 
 class Ship:
     def __init__(
-            self, start: tuple, end: tuple, is_drowned: bool = False
+            self,
+            start: Tuple[int, int],
+            end: Tuple[int, int],
+            is_drowned: bool = False
     ) -> None:
         self.decks = []
         self.start = start
@@ -44,7 +47,7 @@ class Ship:
                 self.decks.append(Deck(row, col))
             return
 
-    def get_deck(self, row: int, column: int) -> Any:
+    def get_deck(self, row: int, column: int) -> Optional[Deck]:
         for deck in self.decks:
             if deck.row == row and deck.column == column:
                 return deck
@@ -63,13 +66,32 @@ class Ship:
 
 
 class Battleship:
-    def __init__(self, ships: list[tuple[tuple, tuple]]) -> None:
-        self.field = {}
+    def __init__(self, ships: List[Ship]) -> None:
+        self.field: dict[Tuple[int, int], Ship] = {}
 
         for start, end in ships:
             ship = Ship(start, end)
             for deck in ship.decks:
                 self.field[(deck.row, deck.column)] = ship
+
+    def _validate_ships(self) -> bool:
+        for deck, ship in self.field.items():
+            row, col = deck
+            if not (0 <= row < 10 and 0 <= col < 10):
+                print(
+                    f"Invalid coordinates for ship at {deck}: out of bounds."
+                )
+                return False
+
+        check_cross_deck = set()
+        for deck in self.field.keys():
+            if deck in check_cross_deck:
+                print(f"Deck {deck} is already in use.")
+                return False
+            check_cross_deck.add(deck)
+
+        print("All ships are correctly placed.")
+        return True
 
     def print_field(self) -> None:
         matrix_field = []
@@ -93,7 +115,7 @@ class Battleship:
         for row in matrix_field:
             print(row)
 
-    def fire(self, location: tuple) -> str:
+    def fire(self, location: Tuple[int, int]) -> str:
         row, col = location
         if not (0 <= row < 10 and 0 <= col < 10):
             return "Invalid coordinates! Out of bounds."
